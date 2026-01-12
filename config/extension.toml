@@ -1,0 +1,26 @@
+[core]
+reloadable = true
+order = 0
+
+[package]
+version = "0.1.0"
+category = "Simulation"
+title = "Franka Assignment"
+description = " "
+authors = ["Bhavagna reddy"]
+repository = ""
+keywords = ["franka", "kinematics", "robotics", "inverse-kinematics"]
+changelog = "docs/CHANGELOG.md"
+readme = "docs/README.md"
+preview_image = "data/preview.png"
+icon = "data/icon.png"
+
+
+[dependencies]
+"omni.kit.uiapp" = {}
+"isaacsim.gui.components" = {}
+"omni.isaac.core" = {}
+"isaacsim.robot_motion.motion_generation" = {}
+"isaacsim.util.debug_draw" = {}
+[[python.module]]
+name = "src"
