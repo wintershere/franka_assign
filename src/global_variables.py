@@ -7,6 +7,6 @@
 # license agreement from NVIDIA CORPORATION is strictly prohibited.
 #
 
-EXTENSION_TITLE = "Lula Kinematics Example"
+EXTENSION_TITLE = "Franka Assignment"
 
-EXTENSION_DESCRIPTION = ""
+EXTENSION_DESCRIPTION = "Franka Panda kinematics demonstration"
