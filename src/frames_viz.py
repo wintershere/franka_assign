@@ -126,5 +126,15 @@ class FramesViz:
         print(f"Visualized {len(samples_success)} successful IK solutions out of {num_poses} sampled poses.")
         print(f"Found {len(samples_failed)} unreachable poses.")
         return samples_failed, samples_success
-
-                
+    #connect waypoints to form a circle
+    def draw_waypoints(self, waypoints, thickness=2.0):
+        starts, ends, colors, sizes = [], [], [], []
+        n = len(waypoints)
+        for i in range(n):
+            p1 = waypoints[i]
+            p2 = waypoints[(i+1)%n]
+            starts.append((float(p1[0]), float(p1[1]), float(p1[2])))
+            ends.append((float(p2[0]), float(p2[1]), float(p2[2])))
+            colors.append((1,1,0,1))
+            sizes.append(float(thickness))
+        self._dd.draw_lines(starts, ends, colors, sizes)

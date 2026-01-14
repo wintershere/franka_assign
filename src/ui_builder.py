@@ -22,7 +22,7 @@ from pxr import Sdf, UsdLux
 
 from .scenario import FrankaKinematicsExample
 from .obj_a import FrankaKinematicsStudy
-
+from .obj_b import FrankaTrajectoryStudy
 class UIBuilder:
     def __init__(self):
         # Frames are sub-windows that can contain multiple UI elements
@@ -100,11 +100,16 @@ class UIBuilder:
                 self._load_btn = LoadButton(
                     "Load Button", "LOAD", setup_scene_fn=self._setup_scene, setup_post_load_fn=self._setup_scenario
                 )
-                self._load_btn = LoadButton(
+                self._load_btn_a = LoadButton(
                     "Load Button", "LOAD_A", setup_scene_fn=self._setup_scene_A, setup_post_load_fn=self._setup_scenario_A
+                )
+                self._load_btn_b = LoadButton(
+                    "Load Button", "LOAD_B", setup_scene_fn=self._setup_scene_B, setup_post_load_fn=self._setup_scenario_B
                 )
                 self._load_btn.set_world_settings(physics_dt=1 / 60.0, rendering_dt=1 / 60.0)
                 self.wrapped_ui_elements.append(self._load_btn)
+                self.wrapped_ui_elements.append(self._load_btn_a)
+                self.wrapped_ui_elements.append(self._load_btn_b)
 
                 self._reset_btn = ResetButton(
                     "Reset Button", "RESET", pre_reset_fn=None, post_reset_fn=self._on_post_reset_btn
@@ -126,8 +131,8 @@ class UIBuilder:
                 )
                 self._scenario_state_btn.enabled = False
                 self.wrapped_ui_elements.append(self._scenario_state_btn)
-        run_scenario_frame_a = CollapsableFrame("Run Scenario_A")
-        with run_scenario_frame_a:
+        run_objective_frame_ = CollapsableFrame("Run Objectives")
+        with run_objective_frame_:
             with ui.VStack(style=get_style(), spacing=5, height=0):
                 self._scenario_state_btna = StateButton(
                     "Run Scenario_A",
@@ -139,6 +144,17 @@ class UIBuilder:
                 )
                 self._scenario_state_btna.enabled = False
                 self.wrapped_ui_elements.append(self._scenario_state_btna)
+                
+                self._scenario_state_btnb = StateButton(
+                    "Run Scenario_B",
+                    "RUN",
+                    "STOP",
+                    on_a_click_fn=self._on_run_scenario_a_text,
+                    on_b_click_fn=self._on_run_scenario_b_text,
+                    physics_callback_fn=self._update_scenario_B,
+                )
+                self._scenario_state_btnb.enabled = False
+                self.wrapped_ui_elements.append(self._scenario_state_btnb)
 
     ######################################################################################
     # Functions Below This Point Support The Provided Example And Can Be Deleted/Replaced
@@ -149,6 +165,7 @@ class UIBuilder:
         self._cuboid = None
         self._scenario = FrankaKinematicsExample()
         self._scenario_a = FrankaKinematicsStudy()
+        self._scenario_b = FrankaTrajectoryStudy()
 
     def _add_light_to_stage(self):
         """
@@ -186,7 +203,17 @@ class UIBuilder:
         world = World.instance()
         for loaded_object in loaded_objects:
             world.scene.add(loaded_object)
+    def _setup_scene_B(self):
+        create_new_stage()
+        self._add_light_to_stage()
+        set_camera_view(eye=[1.5, 1.25, 2], target=[0, 0, 0], camera_prim_path="/OmniverseKit_Persp")
 
+        loaded_objects = self._scenario_b.load_example_assets()
+
+        # Add user-loaded objects to the World
+        world = World.instance()
+        for loaded_object in loaded_objects:
+            world.scene.add(loaded_object)
     def _setup_scenario(self):
         """
         This function is attached to the Load Button as the setup_post_load_fn callback.
@@ -210,6 +237,17 @@ class UIBuilder:
         self._scenario_state_btna.reset()
         self._scenario_state_btna.enabled = True
         self._reset_btn.enabled = True
+        self._scenario_state_btnb.reset()
+        self._scenario_state_btnb.enabled = False
+    def _setup_scenario_B(self):
+        self._scenario_b.setup_B()
+
+        # UI management
+        self._scenario_state_btnb.reset()
+        self._scenario_state_btnb.enabled = True
+        self._reset_btn.enabled = True
+        self._scenario_state_btna.reset()
+        self._scenario_state_btna.enabled = False
     def _on_post_reset_btn(self):
         """
         This function is attached to the Reset Button as the post_reset_fn callback.
@@ -220,10 +258,14 @@ class UIBuilder:
         """
         self._scenario.reset()
         self._scenario_a.reset()
-
+        self._scenario_b.reset()
         # UI management
         self._scenario_state_btn.reset()
         self._scenario_state_btn.enabled = True
+        self._scenario_state_btna.reset()
+        self._scenario_state_btna.enabled = True
+        self._scenario_state_btnb.reset()
+        self._scenario_state_btnb.enabled = True
 
     def _update_scenario(self, step: float):
         """This function is attached to the Run Scenario StateButton.
@@ -237,6 +279,8 @@ class UIBuilder:
         self._scenario.update(step)
     def _update_scenario_A(self, step: float):
         self._scenario_a.update_A(step)
+    def _update_scenario_B(self, step: float):
+        self._scenario_b.update_B(step)
     def _on_run_scenario_a_text(self):
         """
         This function is attached to the Run Scenario StateButton.
@@ -277,4 +321,6 @@ class UIBuilder:
         self._reset_btn.enabled = False
         self._scenario_state_btna.reset()
         self._scenario_state_btna.enabled = False
+        self._scenario_state_btnb.reset()
+        self._scenario_state_btnb.enabled = False
         
