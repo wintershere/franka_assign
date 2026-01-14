@@ -4,6 +4,8 @@ A demonstration of Franka Panda robot kinematics using NVIDIA Isaac Sim. The ext
 
 ## Objective A(Implemented so far)
 
+<img src="assets/obj1.gif" width="500" alt="Objective A Demo">
+
 - **Task Space Sampling**: Generates random poses within a defined cuboid workspace
 - **IK Validation**: Tests each sampled pose for reachability using Lula kinematics solver
 - **Visualization**: 
@@ -14,10 +16,6 @@ A demonstration of Franka Panda robot kinematics using NVIDIA Isaac Sim. The ext
   - Prioritizes unreachable poses first
   - Resets to default pose between targets
   - Loops infinitely through all samples
-
-### Demo
-
-<img src="assets/obja.gif" width="500" alt="Franka Assignment Demo">
 
 ## Tested on
 
