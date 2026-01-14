@@ -47,8 +47,8 @@ class FrankaKinematicsStudy:
         # Add the Franka and target to the stage
 
         robot_prim_path = "/panda"
-        path_to_robot_usd = get_assets_root_path() + "/Isaac/Robots/FrankaRobotics/FrankaPanda/franka.usd"
-
+        extension_path = get_extension_path_from_name("franka_assignment")
+        path_to_robot_usd = os.path.join(extension_path, "assets", "FrankaPanda", "franka.usd")
         add_reference_to_stage(path_to_robot_usd, robot_prim_path)
         self._articulation = Articulation(robot_prim_path)
 
@@ -89,7 +89,7 @@ class FrankaKinematicsStudy:
         
         self._frames_viz = FramesViz()
         self._samples_failed, self._samples_success = self._frames_viz.obj_a_viz(
-            end_effector_name, self._kinematics_solver, N=200, L=0.04, clear=True, seed=42
+            end_effector_name, self._kinematics_solver, N=200, L=0.04, clear=True, seed=6
         )
         
         # Combine failed (red) and success (green) targets, prioritizing failed ones

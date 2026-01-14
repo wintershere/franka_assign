@@ -1,6 +1,7 @@
 # Franka Assignment
 
 A demonstration of Franka Panda robot kinematics using NVIDIA Isaac Sim. The extension performs kinematics experiments with the franka panda 7dof arm.
+
 ## Objective A(Implemented so far)
 
 - **Task Space Sampling**: Generates random poses within a defined cuboid workspace
@@ -13,6 +14,10 @@ A demonstration of Franka Panda robot kinematics using NVIDIA Isaac Sim. The ext
   - Prioritizes unreachable poses first
   - Resets to default pose between targets
   - Loops infinitely through all samples
+
+### Demo
+
+<img src="assets/obja.gif" width="500" alt="Franka Assignment Demo">
 
 ## Tested on
 
