@@ -75,8 +75,11 @@ class UIBuilder:
         Args:
             event (omni.usd.StageEventType): Event Type
         """
+        
         if event.type == int(StageEventType.OPENED):
-            # If the user opens a new stage, the extension should completely reset
+            if getattr(self, "_ignore_next_stage_open", False):
+                self._ignore_next_stage_open = False
+                return
             self._reset_extension()
 
     def cleanup(self):
@@ -118,7 +121,6 @@ class UIBuilder:
                 self.wrapped_ui_elements.append(self._reset_btn)
 
         run_scenario_frame = CollapsableFrame("Run Scenario")
-
         with run_scenario_frame:
             with ui.VStack(style=get_style(), spacing=5, height=0):
                 self._scenario_state_btn = StateButton(
@@ -131,6 +133,7 @@ class UIBuilder:
                 )
                 self._scenario_state_btn.enabled = False
                 self.wrapped_ui_elements.append(self._scenario_state_btn)
+
         run_objective_frame_ = CollapsableFrame("Run Objectives")
         with run_objective_frame_:
             with ui.VStack(style=get_style(), spacing=5, height=0):
@@ -144,7 +147,7 @@ class UIBuilder:
                 )
                 self._scenario_state_btna.enabled = False
                 self.wrapped_ui_elements.append(self._scenario_state_btna)
-                
+
                 self._scenario_state_btnb = StateButton(
                     "Run Scenario_B",
                     "RUN",
@@ -156,6 +159,31 @@ class UIBuilder:
                 self._scenario_state_btnb.enabled = False
                 self.wrapped_ui_elements.append(self._scenario_state_btnb)
 
+        # ---- Joint plots UI ----
+        joint_plot_frame = CollapsableFrame("Scenario_B: Joint Plots (unwrapped)", collapsed=False)
+        with joint_plot_frame:
+            with ui.VStack(style=get_style(), spacing=6, height=0):
+
+                with ui.HStack(height=0, spacing=8):
+                    ui.CheckBox(model=self._plot_enabled_model)
+                    ui.Label("Enable plotting")
+                    ui.Button("Clear", clicked_fn=self._on_clear_joint_plots)
+
+                self._joint_plots = []
+                for j in range(7):
+                    with ui.HStack(height=75, spacing=8):
+                        ui.Label(f"q{j}", width=24)
+                        plot = ui.Plot(
+                            height=70,
+                            width=ui.Fraction(1.0),   # IMPORTANT: not 0
+                            scale_min=-10.0,
+                            scale_max=10.0
+                        )
+                        self._joint_plots.append(plot)
+
+
+
+
     ######################################################################################
     # Functions Below This Point Support The Provided Example And Can Be Deleted/Replaced
     ######################################################################################
@@ -166,7 +194,12 @@ class UIBuilder:
         self._scenario = FrankaKinematicsExample()
         self._scenario_a = FrankaKinematicsStudy()
         self._scenario_b = FrankaTrajectoryStudy()
-
+        self._joint_plots = []
+        self._plot_enabled_model = ui.SimpleBoolModel(True)
+        self._plot_tick = 0
+        self._plot_decim = 5  # update plots every 5 physics steps (lighter UI)
+        self._ignore_next_stage_open = False
+    
     def _add_light_to_stage(self):
         """
         A new stage does not have a light by default.  This function creates a spherical light
@@ -182,6 +215,7 @@ class UIBuilder:
         On pressing the Load Button, a new instance of World() is created and then this function is called.
         The user should now load their assets onto the stage and add them to the World Scene.
         """
+        self._ignore_next_stage_open = True
         create_new_stage()
         self._add_light_to_stage()
         set_camera_view(eye=[1.5, 1.25, 2], target=[0, 0, 0], camera_prim_path="/OmniverseKit_Persp")
@@ -193,6 +227,7 @@ class UIBuilder:
         for loaded_object in loaded_objects:
             world.scene.add(loaded_object)
     def _setup_scene_A(self):
+        self._ignore_next_stage_open = True
         create_new_stage()
         self._add_light_to_stage()
         set_camera_view(eye=[1.5, 1.25, 2], target=[0, 0, 0], camera_prim_path="/OmniverseKit_Persp")
@@ -204,6 +239,7 @@ class UIBuilder:
         for loaded_object in loaded_objects:
             world.scene.add(loaded_object)
     def _setup_scene_B(self):
+        self._ignore_next_stage_open = True
         create_new_stage()
         self._add_light_to_stage()
         set_camera_view(eye=[1.5, 1.25, 2], target=[0, 0, 0], camera_prim_path="/OmniverseKit_Persp")
@@ -261,11 +297,11 @@ class UIBuilder:
         self._scenario_b.reset()
         # UI management
         self._scenario_state_btn.reset()
-        self._scenario_state_btn.enabled = True
+        
         self._scenario_state_btna.reset()
-        self._scenario_state_btna.enabled = True
+        
         self._scenario_state_btnb.reset()
-        self._scenario_state_btnb.enabled = True
+        
 
     def _update_scenario(self, step: float):
         """This function is attached to the Run Scenario StateButton.
@@ -281,6 +317,26 @@ class UIBuilder:
         self._scenario_a.update_A(step)
     def _update_scenario_B(self, step: float):
         self._scenario_b.update_B(step)
+
+        if not self._joint_plots:
+            return
+        if not self._plot_enabled_model.get_value_as_bool():
+            return
+
+        self._plot_tick += 1
+        if self._plot_tick % self._plot_decim != 0:
+            return
+
+        t, qs = self._scenario_b.get_joint_log()
+
+        # qs is [q0_list, q1_list, ... q6_list]
+        if len(t) < 2:
+            return
+
+        for j, plot in enumerate(self._joint_plots):
+            plot.set_xy_data(list(zip(t, qs[j])))
+
+
     def _on_run_scenario_a_text(self):
         """
         This function is attached to the Run Scenario StateButton.
@@ -323,4 +379,10 @@ class UIBuilder:
         self._scenario_state_btna.enabled = False
         self._scenario_state_btnb.reset()
         self._scenario_state_btnb.enabled = False
-        
+
+    def _on_clear_joint_plots(self):
+        self._scenario_b.clear_joint_log()
+        self._plot_tick = 0
+        for p in getattr(self, "_joint_plots", []):
+            # set to empty safely (Plot accepts list of (x,y) pairs)
+            p.set_xy_data([])

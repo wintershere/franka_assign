@@ -5,7 +5,7 @@ order = 0
 [package]
 version = "0.1.0"
 category = "Simulation"
-title = "Franka Assignment"
+title = "kinematics_analysis"
 description = " "
 authors = ["Bhavagna reddy"]
 repository = ""
